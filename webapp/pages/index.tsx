@@ -5,12 +5,14 @@ import { Flex, Box, Text, Button } from "@chakra-ui/react"
 import { ArrowDownIcon } from "@chakra-ui/icons"
 import { useEffect, useState } from "react"
 import axios from "axios"
-import { useAccount, erc20ABI } from "wagmi"
+import { useAccount, erc20ABI, useContractWrite, useToken } from "wagmi"
 
 import Card from "../theme/Card"
 import Currency from "../components/Currency"
 import Footer from "../components/Footer"
 import ErrorAlert from "../components/ErrorAlert"
+import CONSTS from "../consts"
+import { parseUnits } from "ethers/lib/utils"
 
 const API_BASE = "http://192.168.102.246:3000"
 export interface Token {
@@ -34,6 +36,28 @@ const Home: NextPage = () => {
 
   const [error, setError] = useState("")
 
+  const token1Info = useToken({ address: CONSTS.rinkeby[token1.name] })
+
+  const { data, isError, isLoading, write } = useContractWrite({
+    addressOrName: CONSTS.rinkeby[token1.name],
+    contractInterface: erc20ABI,
+    functionName: "approve", // Alwasy from t1
+    args: [
+      token1Info.data?.address,
+      amount1 && parseUnits(amount1, token1Info.data?.decimals),
+    ],
+  })
+
+  console.debug({
+    addressOrName: CONSTS.rinkeby[token1.name],
+    contractInterface: erc20ABI,
+    functionName: "approve", // Alwasy from t1
+    args: [
+      token1Info.data?.address,
+      amount1 && parseUnits(amount1, token1Info.data?.decimals),
+    ],
+  })
+
   const inverse = () => {
     setToken1(token2)
     setAmount1(amount2)
@@ -55,20 +79,16 @@ const Home: NextPage = () => {
     console.log({ address, isConnected })
 
     // 1. Sen req to server
-    axios.post(API_BASE + "/order", {
-      buy: true,
-      amount: 12,
-      address: "0xfaaB3486f19dc9a7Ee165eb6c648Ee2760008e0a",
-      chain: "ethereum",
-      ethprice: 1500,
-    })
+    // axios.post(API_BASE + "/order", {
+    //   buy: true,
+    //   amount: 12,
+    //   address: "0xfaaB3486f19dc9a7Ee165eb6c648Ee2760008e0a",
+    //   chain: "ethereum",
+    //   ethprice: 1500,
+    // })
 
     // 2. Allow tx on mmask
-    const { data, isError, isLoading, write } = useContractWrite({
-      addressOrName: "0xecb504d39723b0be0e3a9aa33d646642d1051ee1",
-      contractInterface: wagmigotchiABI,
-      functionName: "feed",
-    })
+    write()
   }
 
   return (

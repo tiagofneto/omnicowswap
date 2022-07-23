@@ -21,8 +21,6 @@ const Currency = (props: CurrencyProps) => {
     token: CONSTS.rinkeby[selected.name],
   })
 
-  console.log({ data })
-
   const change = (name: string) => {
     const token = tokens.find(t => t.name === name)
     if (!token) {
