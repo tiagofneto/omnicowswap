@@ -1,13 +1,25 @@
 import { ethers } from 'ethers'
+import ADDRESSES from './consts.js'
 
 export function parseBundle(txs) {
   const totalBalance = computeTotalBalance(txs)
 
-  users = txs.map(tx => tx.address)
-  tokens = txs.map(tx => tx.token)
-  amounts = txs.map(tx => tx.amount)
+  if (txs.length === 0) {
+    return
+  }
+
+  const users = txs.map(tx => tx.address)
+  const tokens = txs.map(tx => tx.token)
+  const amounts = txs.map(tx => tx.amount)
 
   const buyOrSell = totalBalance < 0
+  
+  const provider = new ethers.providers.JsonRpcProvider(ADDRESSES.rinkeby.rpc);
+  const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+
+  const omnicow = new ethers.Contract(ADDRESSES.rinkeby.omnicow, ADDRESSES.rinkeby.abi, signer)
+
+  omnicow.fireBundle(users, tokens, amounts, Math.abs(totalBalance), buyOrSell)
 }
 
 function computeTotalBalance(txs) {
