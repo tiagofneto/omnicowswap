@@ -219,7 +219,7 @@ Contracts for:
     Neon (245022934)    Raydium
 */
 
-contract OmnicowTestnet {
+contract OmnicowRinkeby {
     IUniswapV2Router02 public uniswapV2Router;
     ERC20 public USDC;
     ERC20 public WETH;
@@ -270,6 +270,94 @@ contract OmnicowTestnet {
         _;
     }
 
+    // USDC WORKING, WETH NOT FIRING
+    function TEST1fireBundle(
+        address[] calldata user, // to pull from
+        address[] calldata token, // if token = USDC, user is buying, if token = WETH, user is selling
+        uint256[] calldata amount // amount of token to pull
+    ) public {
+
+        uint256 totalUSDC;
+        uint256 totalWETH;
+
+        for (uint256 i = 0; i < user.length; i++) {
+
+            // If user is selling
+            if (token[i] == address(WETH)) {
+                totalWETH += amount[i];
+
+                // Transfers WETH from user to the contract
+                uint256 wethAmount = amount[i] / ETHvalue;
+                ERC20(token[i]).transferFrom(user[i], address(this), wethAmount*10**ERC20(token[i]).decimals());
+
+            // If user is buying
+            } else {
+                totalUSDC += amount[i];
+                
+                // Transfers USDC from user to the contract
+                ERC20(token[i]).transferFrom(user[i], address(this), amount[i]*10**ERC20(token[i]).decimals());
+            }
+        }   
+
+    }
+
+    // WORKING
+    function TEST2fireBundle(
+        uint256 tradingAmount, // USD value amount of ETH to buy or sell on DEX
+        bool buyingOrSellingETH // true = buying ETH, false = selling ETH
+    ) public {
+
+        // if need to buy ETH
+        if (buyingOrSellingETH = true) {
+            //Sushi buy ETH
+            swapExactTokensForTokens(address(USDC), address(WETH), tradingAmount*10**ERC20(USDC).decimals());
+
+        } else {
+            //if need to sell ETH
+
+            //Sushi sell ETH
+            swapExactTokensForTokens(address(WETH), address(USDC), ((tradingAmount / ETHvalue) * 10**ERC20(WETH).decimals())   );
+        } 
+    }
+
+    // NOT WORKING, TRANSFERS 0
+        // https://rinkeby.etherscan.io/tx/0x6049dec9010614cd5dd0945eea5cdc4e77f49fb3b3c0be075c14040a7ebccefe
+        // https://rinkeby.etherscan.io/tx/0xe3b24535a97f628cb4acfa449877f58a5d4c41472ad0aef6ce041960d6a10563
+    function TEST3fireBundle(
+        address[] calldata user, // to pull from
+        address[] calldata token, // if token = USDC, user is buying, if token = WETH, user is selling
+        uint256[] calldata amount // amount of token to pull
+    ) public {
+
+        uint256 totalUSDC = 100;
+        uint256 totalWETH = 100;
+
+        // Transfers funds from contract to user
+        for (uint256 i = 0; i < user.length; i++) {
+            
+            address receiveToken;
+            uint256 fundsForUser; 
+
+            // if user was selling WETH, they receive USDC
+            if (token[i] == address(WETH)) {
+                receiveToken = address(USDC);
+                
+                uint256 percentOfTokens = (amount[i] / totalWETH) * 100;
+                fundsForUser = (totalUSDC / 100) * percentOfTokens;
+
+            } else {
+                // if user was buying WETH, they receive WETH
+                receiveToken = address(WETH);
+
+                uint256 percentOfTokens = (amount[i] / totalUSDC) * 100;
+                fundsForUser = (totalUSDC / 100) * percentOfTokens;
+            }
+            
+            ERC20(receiveToken).transferFrom(address(this), user[i], fundsForUser*10**ERC20(receiveToken).decimals());
+        }   
+    }
+
+
     function fireBundle(
         address[] calldata user, // to pull from
         address[] calldata token, // if token = USDC, user is buying, if token = WETH, user is selling
@@ -283,23 +371,22 @@ contract OmnicowTestnet {
 
         for (uint256 i = 0; i < user.length; i++) {
 
-            // Transfers users funds to the contract
-            ERC20(token[i]).transferFrom(user[i], address(this), amount[i]);
-
             // If user is selling
             if (token[i] == address(WETH)) {
-                totalWETH += amount[i];
 
                 // Transfers WETH from user to the contract
                 uint256 wethAmount = amount[i] / ETHvalue;
                 ERC20(token[i]).transferFrom(user[i], address(this), wethAmount);
 
+                totalWETH += wethAmount;
+
             // If user is buying
             } else {
-                totalUSDC += amount[i];
                 
                 // Transfers USDC from user to the contract
                 ERC20(token[i]).transferFrom(user[i], address(this), amount[i]);
+
+                totalUSDC += amount[i];
             }
         }   
 
@@ -343,7 +430,9 @@ contract OmnicowTestnet {
     function swapExactTokensForTokens(
         address tokenSell,
         address tokenBuy,
-        uint256 tokenAmount) private {
+        uint256 tokenAmount
+        ) private {
+
         // generate the uniswap pair path of token -> weth
         address[] memory path = new address[](2);
         path[0] = tokenSell;
