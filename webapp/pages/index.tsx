@@ -7,8 +7,39 @@ import Card from "../theme/Card"
 import Currency from "../components/Currency"
 import { ArrowDownIcon } from "@chakra-ui/icons"
 import Footer from "../components/Footer"
+import { useEffect, useState } from "react"
+import { reverse } from "dns"
+
+export interface Token {
+  name: string
+  value: number
+}
+
+const tokens = [
+  { name: "ETH", value: 1564 },
+  { name: "USDC", value: 1 },
+]
 
 const Home: NextPage = () => {
+  const [token1, setToken1] = useState(tokens[0])
+  const [token2, setToken2] = useState(tokens[1])
+
+  const [amount1, setAmount1] = useState(0)
+  const [amount2, setAmount2] = useState(0)
+
+  const inverse = () => {
+    setToken1(token2)
+    setAmount1(amount2)
+    setToken2(token1)
+    setAmount2(amount1)
+  }
+
+  useEffect(() => {
+    const amount2 =
+      Math.round(((token1.value * amount1) / token2.value) * 10000) / 10000
+    setAmount2(amount2)
+  }, [token1, amount1, token2])
+
   return (
     <>
       <Box
@@ -46,17 +77,31 @@ const Home: NextPage = () => {
               Swap
             </Text>
 
-            <Currency />
+            <Currency
+              tokens={tokens}
+              selected={token1}
+              amount={amount1}
+              changeSelected={e => setToken1(e)}
+              changeAmount={e => setAmount1(e)}
+            />
             <Box
+              m={2}
               borderRadius="md"
               background="white"
               padding=".25rem .5rem"
-              m={2}
               display="inline-block"
+              cursor="pointer"
+              onClick={inverse}
             >
               <ArrowDownIcon />
             </Box>
-            <Currency />
+            <Currency
+              tokens={tokens}
+              selected={token2}
+              amount={amount2}
+              changeSelected={e => setToken2(e)}
+              changeAmount={() => 0}
+            />
 
             <Button variant="primary" mt={4} size="lg" width="100%">
               Swap

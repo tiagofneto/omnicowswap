@@ -14,11 +14,10 @@ const Footer = () => (
     bottom="0"
     position="fixed"
     width="100%"
-    mb={2}
+    background="white"
+    p={2}
   >
-    Made with ❤️ at Ethcc hack in Paris 🥐🇪🇺
-    <br />
-    by{" "}
+    Made with ❤️ at Ethcc hack in Paris 🥐🇪🇺 by{" "}
     {team.map(({ name, twitter }, i) => (
       <Box as="span" key={twitter}>
         <Link

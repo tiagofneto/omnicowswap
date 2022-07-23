@@ -1,12 +1,30 @@
-import { Flex, Input, Select, Text } from "@chakra-ui/react"
+import { Flex, Input, NumberInput, Select, Text } from "@chakra-ui/react"
 import { useState } from "react"
+import { Token } from "../pages"
 import Card from "../theme/Card"
 
-const tokens = ["ETH", "USDC"]
+interface CurrencyProps {
+  tokens: Token[]
+  selected: Token
+  amount: string
+  changeSelected: (t: Token) => any
+  changeAmount: (amount: number) => any
+}
 
-const Currency = () => {
-  const [token, setToken] = useState(tokens[0])
-  const [amount, setAmount] = useState(0)
+const Currency = (props: CurrencyProps) => {
+  const { tokens, selected, amount, changeSelected, changeAmount } = props
+
+  const change = (name: string) => {
+    const token = tokens.find(t => t.name === name)
+    if (!token) {
+      return
+    }
+
+    changeSelected(token)
+  }
+
+  const amountValue =
+    Math.round(+amount * selected.value * 10000) / 10000 || "0"
 
   return (
     <Card>
@@ -15,12 +33,12 @@ const Currency = () => {
           w="100"
           variant="filled"
           placeholder="Select coin"
-          value={token}
-          onChange={e => setToken(e.target.value)}
+          value={selected.name}
+          onChange={e => change(e.target.value)}
         >
-          {tokens.map(t => (
-            <option value={t} key={t}>
-              {t}
+          {tokens.map(({ name }) => (
+            <option value={name} key={name}>
+              {name}
             </option>
           ))}
         </Select>
@@ -30,16 +48,16 @@ const Currency = () => {
           textAlign="right"
           fontSize="2rem"
           fontWeight="bold"
-          onChange={e => setAmount(parseInt(e.target.value))}
+          onChange={e => changeAmount(e.target.value)}
           value={amount}
         />
       </Flex>
       <Flex justifyContent="space-between">
         <Text colorScheme="green" fontFamily="Courier New">
-          Balance: 0 USDC
+          Balance: 0
         </Text>
         <Text colorScheme="green" fontFamily="Courier New">
-          ≈ $ 0
+          ≈ ${amountValue}
         </Text>
       </Flex>
     </Card>
