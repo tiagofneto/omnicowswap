@@ -1,18 +1,27 @@
-import { Flex, Input, NumberInput, Select, Text } from "@chakra-ui/react"
-import { useState } from "react"
+import { Flex, Input, Select, Text } from "@chakra-ui/react"
+import { useAccount, useBalance } from "wagmi"
+import { formatUnits } from "ethers/lib/utils"
 import { Token } from "../pages"
 import Card from "../theme/Card"
+import CONSTS from "../consts"
 
 interface CurrencyProps {
   tokens: Token[]
   selected: Token
   amount: string
   changeSelected: (t: Token) => any
-  changeAmount: (amount: number) => any
+  changeAmount: (amount: string) => any
 }
 
 const Currency = (props: CurrencyProps) => {
   const { tokens, selected, amount, changeSelected, changeAmount } = props
+  const { address } = useAccount()
+  const { data } = useBalance({
+    addressOrName: address,
+    token: CONSTS.rinkeby[selected.name],
+  })
+
+  console.log({ data })
 
   const change = (name: string) => {
     const token = tokens.find(t => t.name === name)
@@ -54,10 +63,15 @@ const Currency = (props: CurrencyProps) => {
       </Flex>
       <Flex justifyContent="space-between">
         <Text colorScheme="green" fontFamily="Courier New">
-          Balance: 0
+          Balance:{" "}
+          {data
+            ? Number(formatUnits(data.value, data.decimals)).toLocaleString(
+                "en-US"
+              )
+            : 0}
         </Text>
         <Text colorScheme="green" fontFamily="Courier New">
-          ≈ ${amountValue}
+          ≈ ${amountValue.toLocaleString("en-US")}
         </Text>
       </Flex>
     </Card>

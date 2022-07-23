@@ -2,30 +2,37 @@ import { ConnectButton } from "@rainbow-me/rainbowkit"
 import type { NextPage } from "next"
 import Head from "next/head"
 import { Flex, Box, Text, Button } from "@chakra-ui/react"
+import { ArrowDownIcon } from "@chakra-ui/icons"
+import { useEffect, useState } from "react"
+import axios from "axios"
+import { useAccount, erc20ABI } from "wagmi"
 
 import Card from "../theme/Card"
 import Currency from "../components/Currency"
-import { ArrowDownIcon } from "@chakra-ui/icons"
 import Footer from "../components/Footer"
-import { useEffect, useState } from "react"
-import { reverse } from "dns"
+import ErrorAlert from "../components/ErrorAlert"
 
+const API_BASE = "http://192.168.102.246:3000"
 export interface Token {
   name: string
   value: number
 }
 
 const tokens = [
-  { name: "ETH", value: 1564 },
+  { name: "WETH", value: 1564 },
   { name: "USDC", value: 1 },
 ]
 
 const Home: NextPage = () => {
+  const { address, isConnected } = useAccount()
+
   const [token1, setToken1] = useState(tokens[0])
   const [token2, setToken2] = useState(tokens[1])
 
-  const [amount1, setAmount1] = useState(0)
-  const [amount2, setAmount2] = useState(0)
+  const [amount1, setAmount1] = useState("")
+  const [amount2, setAmount2] = useState("")
+
+  const [error, setError] = useState("")
 
   const inverse = () => {
     setToken1(token2)
@@ -36,12 +43,38 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     const amount2 =
-      Math.round(((token1.value * amount1) / token2.value) * 10000) / 10000
-    setAmount2(amount2)
+      Math.round(((token1.value * +amount1) / token2.value) * 10000) / 10000
+    setAmount2(amount2 + "")
   }, [token1, amount1, token2])
+
+  const onSwap = () => {
+    if (!isConnected) {
+      return setError("Please connect your wallet first")
+    }
+
+    console.log({ address, isConnected })
+
+    // 1. Sen req to server
+    axios.post(API_BASE + "/order", {
+      buy: true,
+      amount: 12,
+      address: "0xfaaB3486f19dc9a7Ee165eb6c648Ee2760008e0a",
+      chain: "ethereum",
+      ethprice: 1500,
+    })
+
+    // 2. Allow tx on mmask
+    const { data, isError, isLoading, write } = useContractWrite({
+      addressOrName: "0xecb504d39723b0be0e3a9aa33d646642d1051ee1",
+      contractInterface: wagmigotchiABI,
+      functionName: "feed",
+    })
+  }
 
   return (
     <>
+      <ErrorAlert error={error} close={() => setError("")} />
+
       <Box
         background="url('bg2.jpg') center"
         backgroundSize="cover"
@@ -82,7 +115,7 @@ const Home: NextPage = () => {
               selected={token1}
               amount={amount1}
               changeSelected={e => setToken1(e)}
-              changeAmount={e => setAmount1(e)}
+              changeAmount={e => setAmount1(e + "")}
             />
             <Box
               m={2}
@@ -103,7 +136,13 @@ const Home: NextPage = () => {
               changeAmount={() => 0}
             />
 
-            <Button variant="primary" mt={4} size="lg" width="100%">
+            <Button
+              variant="primary"
+              mt={4}
+              size="lg"
+              width="100%"
+              onClick={onSwap}
+            >
               Swap
             </Button>
           </Card>
