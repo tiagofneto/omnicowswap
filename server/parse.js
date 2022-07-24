@@ -12,7 +12,7 @@ export function parseBundle(txs) {
   const tokens = txs.map(tx => tx.token)
   const amounts = txs.map(tx => tx.amount)
 
-  const buyOrSell = totalBalance < 0
+  const buyOrSell = totalBalance > 0
   
   const provider = new ethers.providers.JsonRpcProvider(ADDRESSES.rinkeby.rpc);
   const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);

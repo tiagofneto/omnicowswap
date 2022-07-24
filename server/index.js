@@ -16,7 +16,7 @@ app.use((req, res, next) => {
     next();
 });
 
-const txs = []
+let txs = []
 
 app.post('/order', (req, res) => {
   txs.push(req.body)
@@ -25,4 +25,7 @@ app.post('/order', (req, res) => {
 })
 
 const bundleMinutes = 1
-setInterval(() => parseBundle(txs) , bundleMinutes * 60 * 1000)
+setInterval(() =>  {
+  parseBundle(txs)
+  txs = []
+} , bundleMinutes * 60 * 1000)
