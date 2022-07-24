@@ -2,7 +2,8 @@
 pragma solidity ^0.8.13;
 
 // import "nxtp/interfaces/IConnextHandler.sol";
-import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-contracts/access/Ownable.sol";
+import "openzeppelin-contracts/token/ERC20/extensions/IERC20.sol";
 import "v2-periphery/interfaces/IUniswapV2Router02.sol";
 
 /*
@@ -14,39 +15,14 @@ Contracts for:
     Neon (245022934)    Raydium
 */
 
-contract Omnicow {
+contract Omnicow is Ownable {
+    uint256 constant ETH_VALUE = 1500;
+
     IUniswapV2Router02 public uniswapV2Router;
     IERC20 public USDC;
     IERC20 public WETH;
 
     // IConnextHandler public immutable connext;
-
-    uint256 public ETHvalue;
-
-        // USDC
-            // Rinkeby: 0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b
-            // Kovan:   0xb7a4F3E9097C08dA09517b5aB877F7a917224ede
-            // Polygon: 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
-            // Gnosis:  0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83
-            // Celo:    
-
-        // WETH
-            // Rinkeby: 0xc778417E063141139Fce010982780140Aa0cD5Ab
-            // Kovan:   0xd0A1E359811322d97991E03f863a0C30C2cF029C
-            // Polygon: 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619
-            // Gnosis:  
-            // Celo:    
-
-        // SushiSwap Router
-            // Rinkeby: 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506
-            // Kovan:   0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506
-            // Polygon: 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F
-            // Gnosis:  0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F
-            // Celo:    0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F
-
-        // Connext
-            // Rinkeby: 
-            // Kovan: 
 
     constructor(address _USDC, address _WETH, address _router) {
         USDC = IERC20(_USDC);
@@ -60,32 +36,26 @@ contract Omnicow {
         uint256[] calldata amount, // amount of token to pull
         uint256 tradingAmount, // USD value amount of ETH to buy or sell on DEX
         bool buyingOrSellingETH // true = buying ETH, false = selling ETH
-    ) public {
-
+    ) public onlyOwner {
+        // 1: Pull user funds
         uint256 totalUSDC;
         uint256 totalWETH;
-
         for (uint256 i = 0; i < user.length; i++) {
-
             // If user is selling
             if (token[i] == address(WETH)) {
-
                 // Transfers WETH from user to the contract
-                uint256 wethAmount = amount[i] / ETHvalue;
+                uint256 wethAmount = amount[i] / ETH_VALUE;
                 IERC20(token[i]).transferFrom(user[i], address(this), wethAmount);
-
                 totalWETH += wethAmount;
-
             // If user is buying
             } else {
-                
                 // Transfers USDC from user to the contract
                 IERC20(token[i]).transferFrom(user[i], address(this), amount[i]);
-
                 totalUSDC += amount[i];
             }
         }   
 
+        // 2: Swap non matched on AMM
         // if need to buy ETH
         if (buyingOrSellingETH = true) {
             //Sushi buy ETH
@@ -95,10 +65,10 @@ contract Omnicow {
             //if need to sell ETH
 
             //Sushi sell ETH
-            swapExactTokensForTokens(address(WETH), address(USDC), uint256(tradingAmount / ETHvalue));
+            swapExactTokensForTokens(address(WETH), address(USDC), uint256(tradingAmount / ETH_VALUE));
         }
 
-        // Transfers funds from contract to user
+        // 3: Transfer funds to users
         for (uint256 i = 0; i < user.length; i++) {
             
             address receiveToken;
