@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "predeploy": "npm run build && next export",
+    "deploy": "surge out/ omnicow.surge.sh"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.0.4",
