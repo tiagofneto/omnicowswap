@@ -89,7 +89,7 @@ const Home: NextPage = () => {
     listener: event => {
       console.log(event)
 
-      let moo = new Audio("moo.mp3")
+      let moo = new Audio("moo_2.mp3")
       moo.play()
 
       toast({
