@@ -85,7 +85,7 @@ contract Omnicow is Ownable {
                 /*} else {*/
                   /*fundsForUser = ((totalUSDC + amountSwapped) / 100) * percentOfTokens;*/
                 /*}*/
-                fundsForUser = USDC.balanceOf(address(this)) / (100 * percentOfTokens);
+                fundsForUser = USDC.balanceOf(address(this)) * percentOfTokens / 100;
 
             } else {
                 // if user was buying WETH, they receive WETH
@@ -102,7 +102,7 @@ contract Omnicow is Ownable {
                 /*} else {*/
                   /*fundsForUser = ((totalWETH - (uint256(-tradingAmount) * 10**6)) / 100) * percentOfTokens;*/
                 /*}*/
-                fundsForUser = WETH.balanceOf(address(this)) / (100 * percentOfTokens);
+                fundsForUser = WETH.balanceOf(address(this)) * percentOfTokens / 100;
             }
             
             IERC20(receiveToken).transfer(user[i], fundsForUser);
