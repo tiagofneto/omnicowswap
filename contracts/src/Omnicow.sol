@@ -48,10 +48,10 @@ contract Omnicow {
             // Rinkeby: 
             // Kovan: 
 
-    constructor() {
-        USDC = IERC20(0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b);
-        WETH = IERC20(0xc778417E063141139Fce010982780140Aa0cD5Ab);
-        uniswapV2Router = IUniswapV2Router02(0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506);
+    constructor(address _USDC, address _WETH, address _router) {
+        USDC = IERC20(_USDC);
+        WETH = IERC20(_WETH);
+        uniswapV2Router = IUniswapV2Router02(_router);
     }
 
     function fireBundle(
