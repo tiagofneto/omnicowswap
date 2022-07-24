@@ -1,11 +1,28 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import type { NextPage } from "next"
 import Head from "next/head"
-import { Flex, Box, Text, Button } from "@chakra-ui/react"
+import {
+  Flex,
+  Box,
+  Text,
+  Button,
+  Spinner,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  CloseButton,
+  useToast,
+} from "@chakra-ui/react"
 import { ArrowDownIcon } from "@chakra-ui/icons"
 import { useEffect, useState } from "react"
 import axios from "axios"
-import { useAccount, erc20ABI, useContractWrite, useToken } from "wagmi"
+import {
+  useAccount,
+  erc20ABI,
+  useContractWrite,
+  useToken,
+  useWaitForTransaction,
+} from "wagmi"
 
 import Card from "../theme/Card"
 import Currency from "../components/Currency"
@@ -21,12 +38,13 @@ export interface Token {
 }
 
 const tokens = [
-  { name: "WETH", value: 1564 },
+  { name: "WETH", value: 1500 },
   { name: "USDC", value: 1 },
 ]
 
 const Home: NextPage = () => {
   const { address, isConnected } = useAccount()
+  const toast = useToast()
 
   const [token1, setToken1] = useState(tokens[0])
   const [token2, setToken2] = useState(tokens[1])
@@ -38,24 +56,29 @@ const Home: NextPage = () => {
 
   const token1Info = useToken({ address: CONSTS.rinkeby[token1.name] })
 
-  const { data, isError, isLoading, write } = useContractWrite({
+  const { data, isError, isLoading, writeAsync } = useContractWrite({
     addressOrName: CONSTS.rinkeby[token1.name],
     contractInterface: erc20ABI,
     functionName: "approve", // Alwasy from t1
     args: [
-      token1Info.data?.address,
+      "0x61a726e30CBf901f5ca8123a46eCDe30B5D38f23",
       amount1 && parseUnits(amount1, token1Info.data?.decimals),
     ],
   })
 
-  console.debug({
-    addressOrName: CONSTS.rinkeby[token1.name],
-    contractInterface: erc20ABI,
-    functionName: "approve", // Alwasy from t1
-    args: [
-      token1Info.data?.address,
-      amount1 && parseUnits(amount1, token1Info.data?.decimals),
-    ],
+  const waitForTx = useWaitForTransaction({
+    hash: data?.hash,
+    onSuccess(data) {
+      toast({
+        position: "top-right",
+        title: "🐮 Omni MOOO",
+        description:
+          "We're matching your swap with other users. Please be patient...",
+        status: "success",
+        duration: 8000,
+        isClosable: true,
+      })
+    },
   })
 
   const inverse = () => {
@@ -71,24 +94,28 @@ const Home: NextPage = () => {
     setAmount2(amount2 + "")
   }, [token1, amount1, token2])
 
-  const onSwap = () => {
+  const onSwap = async () => {
     if (!isConnected) {
       return setError("Please connect your wallet first")
+    }
+    if (!amount1 || isNaN(+amount1)) {
+      return setError("Please enter a valid amount to swap")
     }
 
     console.log({ address, isConnected })
 
-    // 1. Sen req to server
-    // axios.post(API_BASE + "/order", {
-    //   buy: true,
-    //   amount: 12,
-    //   address: "0xfaaB3486f19dc9a7Ee165eb6c648Ee2760008e0a",
-    //   chain: "ethereum",
-    //   ethprice: 1500,
-    // })
+    // 1. Allow tx on mmask
+    await writeAsync()
 
-    // 2. Allow tx on mmask
-    write()
+    // 2. Sen req to server
+    axios.post(API_BASE + "/order", {
+      buy: token1.name === "WETH" ? false : true,
+      token: CONSTS.rinkeby[token1.name],
+      amount: +amount1 * token1.value,
+      address,
+      chain: "ethereum", // TODO
+      ethprice: 1500,
+    })
   }
 
   return (
@@ -98,8 +125,8 @@ const Home: NextPage = () => {
       <Box
         background="url('bg2.jpg') center"
         backgroundSize="cover"
-        minH="100vh"
-        minW="100vw"
+        h="100vh"
+        w="100vw"
         position="absolute"
       >
         <Head>
@@ -162,8 +189,13 @@ const Home: NextPage = () => {
               size="lg"
               width="100%"
               onClick={onSwap}
+              disabled={isLoading || waitForTx.isLoading}
             >
-              Swap
+              {!isLoading && !waitForTx.isLoading && "Swap"}
+              {isLoading && "Waiting for your approval..."}
+              {waitForTx.isLoading && "Waiting for tx success..."}
+              {isLoading ||
+                (waitForTx.isLoading && <Spinner size="md" ml={2} />)}
             </Button>
           </Card>
         </Box>

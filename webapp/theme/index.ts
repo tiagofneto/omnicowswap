@@ -13,20 +13,6 @@ const theme = extendTheme({
     },
   },
   components: {
-    // Select: {
-    //   baseStyle: {
-    //     border: "2px solid rgb(175, 203, 218)",
-    //     background: "white",
-    //     padding: 3,
-    //     borderRadius: 16,
-    //   },
-    //   variants: {
-    //     test: {
-    //       border: "5px solid red",
-    //       color: "blue",
-    //     },
-    //   },
-    // },
     Card: {
       baseStyle: {
         border: "2px solid rgb(175, 203, 218)",
@@ -51,7 +37,7 @@ const theme = extendTheme({
           padding: 3,
           borderRadius: "xl",
 
-          "&:hover": {
+          ":not([disabled])&:hover": {
             transform: "translate(4px, 4px)",
             boxShadow: "rgb(0, 0, 0) 0px 0px 0px",
           },
