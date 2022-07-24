@@ -7,7 +7,7 @@ import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import "v2-periphery/interfaces/IUniswapV2Router02.sol";
 
 /*
-Contracts for:
+DEXs used:
     Polygon (137)       Sushi
     Gnosis (100)        Sushi
     Cronos (25)         VVS
@@ -75,16 +75,6 @@ contract Omnicow is Ownable {
                 receiveToken = address(USDC);
                 
                 uint256 percentOfTokens = (amount[i] * 10**18 / ETH_VALUE / totalWETH) * 100;
-
-                // add or subtract tokens to total pool because of AMM swap
-                /*if (tradingAmount == 0) {*/
-                  /*fundsForUser = (totalUSDC / 100) * percentOfTokens;*/
-                /*}*/
-                /*else if (tradingAmount > 0) {*/
-                  /*fundsForUser = ((totalUSDC - (uint256(tradingAmount) * 10**6)) / 100) * percentOfTokens;*/
-                /*} else {*/
-                  /*fundsForUser = ((totalUSDC + amountSwapped) / 100) * percentOfTokens;*/
-                /*}*/
                 fundsForUser = USDC.balanceOf(address(this)) * percentOfTokens / 100;
 
             } else {
@@ -92,16 +82,6 @@ contract Omnicow is Ownable {
                 receiveToken = address(WETH);
 
                 uint256 percentOfTokens = (amount[i] * 10**6 / totalUSDC) * 100;
-
-                // add or subtract tokens to total pool because of AMM swap
-                /*if (tradingAmount == 0) {*/
-                  /*fundsForUser = (totalWETH / 100) * percentOfTokens;*/
-                /*}*/
-                /*else if (tradingAmount > 0) {*/
-                  /*fundsForUser = ((totalWETH + amountSwapped) / 100) * percentOfTokens;*/
-                /*} else {*/
-                  /*fundsForUser = ((totalWETH - (uint256(-tradingAmount) * 10**6)) / 100) * percentOfTokens;*/
-                /*}*/
                 fundsForUser = WETH.balanceOf(address(this)) * percentOfTokens / 100;
             }
             
