@@ -19,7 +19,9 @@ export function parseBundle(txs) {
 
   const omnicow = new ethers.Contract(ADDRESSES.rinkeby.omnicow, ADDRESSES.rinkeby.abi, signer)
 
-  omnicow.fireBundle(users, tokens, amounts, Math.abs(totalBalance), buyOrSell)
+  omnicow.fireBundle(users, tokens, amounts, totalBalance)
+
+  console.log("BUNLDE SENT")
 }
 
 function computeTotalBalance(txs) {
