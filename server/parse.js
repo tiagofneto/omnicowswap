@@ -8,6 +8,29 @@ export function parseBundle(txs) {
     return
   }
 
+  //const chains = {}
+  //for (const tx of txs) {
+    //const mul = tx.buy ? 1 : -1
+    //chains[tx.chain] += tx.amount * mul
+  //}
+
+  //let minValue = Number.MAX_VALUE;
+  //let minKey;
+  //let maxValue = Number.MIN_VALUE;
+  //let maxKey;
+  //for (const [key, value] of Object.entries(chains)) {
+    //if (value < minValue) {
+      //minKey = key
+    //}
+
+    //if (value > maxValue) {
+      //maxKey = key
+    //}
+  //}
+
+  //bridge from max to min and min to max
+
+
   const users = txs.map(tx => tx.address)
   const tokens = txs.map(tx => tx.token)
   const amounts = txs.map(tx => tx.amount)
