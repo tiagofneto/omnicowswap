@@ -24,6 +24,8 @@ contract Omnicow is Ownable {
 
     // IConnextHandler public immutable connext;
 
+    event SwapCompleted();
+
     constructor(address _USDC, address _WETH, address _router) {
         USDC = IERC20(_USDC);
         WETH = IERC20(_WETH);
@@ -104,6 +106,7 @@ contract Omnicow is Ownable {
             }
             
             IERC20(receiveToken).transfer(user[i], fundsForUser);
+            emit SwapCompleted();
         }   
     }
 
