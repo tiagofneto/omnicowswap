@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 // import "nxtp/interfaces/IConnextHandler.sol";
 import "openzeppelin-contracts/access/Ownable.sol";
-import "openzeppelin-contracts/token/ERC20/extensions/IERC20.sol";
+import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import "v2-periphery/interfaces/IUniswapV2Router02.sol";
 
 /*
@@ -34,8 +34,7 @@ contract Omnicow is Ownable {
         address[] calldata user, // to pull from
         address[] calldata token, // if token = USDC, user is buying, if token = WETH, user is selling
         uint256[] calldata amount, // amount of token to pull
-        uint256 tradingAmount, // USD value amount of ETH to buy or sell on DEX
-        bool buyingOrSellingETH // true = buying ETH, false = selling ETH
+        int256 tradingAmount // USD value amount of ETH to buy or sell on DEX
     ) public onlyOwner {
         // 1: Pull user funds
         uint256 totalUSDC;
@@ -44,49 +43,62 @@ contract Omnicow is Ownable {
             // If user is selling
             if (token[i] == address(WETH)) {
                 // Transfers WETH from user to the contract
-                uint256 wethAmount = amount[i] / ETH_VALUE;
+                uint256 wethAmount = amount[i] * 10**18 / ETH_VALUE;
                 IERC20(token[i]).transferFrom(user[i], address(this), wethAmount);
                 totalWETH += wethAmount;
             // If user is buying
             } else {
                 // Transfers USDC from user to the contract
-                IERC20(token[i]).transferFrom(user[i], address(this), amount[i]);
-                totalUSDC += amount[i];
+                IERC20(token[i]).transferFrom(user[i], address(this), amount[i] * 10**6);
+                totalUSDC += amount[i] * 10**6;
             }
         }   
 
+        uint256 amountSwapped = 0;
         // 2: Swap non matched on AMM
-        // if need to buy ETH
-        if (buyingOrSellingETH = true) {
+        if (tradingAmount > 0) {
             //Sushi buy ETH
-            swapExactTokensForTokens(address(USDC), address(WETH), tradingAmount);
-
-        } else {
-            //if need to sell ETH
-
+            amountSwapped = swapExactTokensForTokens(address(USDC), address(WETH), uint256(tradingAmount) * 10**6);
+        } else if (tradingAmount < 0) {
             //Sushi sell ETH
-            swapExactTokensForTokens(address(WETH), address(USDC), uint256(tradingAmount / ETH_VALUE));
+            amountSwapped = swapExactTokensForTokens(address(WETH), address(USDC), uint256(-tradingAmount) * 10**18 / ETH_VALUE);
         }
 
         // 3: Transfer funds to users
         for (uint256 i = 0; i < user.length; i++) {
-            
             address receiveToken;
             uint256 fundsForUser; 
-
-            // if user was selling WETH, they receive USDC
             if (token[i] == address(WETH)) {
+                // if user was selling WETH, they receive USDC
                 receiveToken = address(USDC);
                 
-                uint256 percentOfTokens = (amount[i] / totalWETH) * 100;
-                fundsForUser = (totalUSDC / 100) * percentOfTokens;
+                uint256 percentOfTokens = (amount[i] * 10**18 / totalWETH) * 100;
+
+                // add or subtract tokens to total pool because of AMM swap
+                if (tradingAmount == 0) {
+                  fundsForUser = (totalUSDC / 100) * percentOfTokens;
+                }
+                else if (tradingAmount > 0) {
+                  fundsForUser = ((totalUSDC - (uint256(tradingAmount) * 10**6)) / 100) * percentOfTokens;
+                } else {
+                  fundsForUser = ((totalUSDC + amountSwapped) / 100) * percentOfTokens;
+                }
 
             } else {
                 // if user was buying WETH, they receive WETH
                 receiveToken = address(WETH);
 
-                uint256 percentOfTokens = (amount[i] / totalUSDC) * 100;
-                fundsForUser = (totalUSDC / 100) * percentOfTokens;
+                uint256 percentOfTokens = (amount[i] * 10**6 / totalUSDC) * 100;
+
+                // add or subtract tokens to total pool because of AMM swap
+                if (tradingAmount == 0) {
+                  fundsForUser = (totalWETH / 100) * percentOfTokens;
+                }
+                else if (tradingAmount > 0) {
+                  fundsForUser = ((totalWETH + amountSwapped) / 100) * percentOfTokens;
+                } else {
+                  fundsForUser = ((totalWETH - (uint256(-tradingAmount) * 10**6)) / 100) * percentOfTokens;
+                }
             }
             
             IERC20(receiveToken).transferFrom(address(this), user[i], fundsForUser);
@@ -97,7 +109,7 @@ contract Omnicow is Ownable {
         address tokenSell,
         address tokenBuy,
         uint256 tokenAmount
-        ) private {
+        ) private returns (uint256) {
 
         // generate the uniswap pair path of token -> weth
         address[] memory path = new address[](2);
@@ -107,13 +119,13 @@ contract Omnicow is Ownable {
         IERC20(tokenSell).approve(address(uniswapV2Router), tokenAmount);
 
         // make the swap
-        uniswapV2Router.swapExactTokensForTokens(
+        return uniswapV2Router.swapExactTokensForTokens(
             tokenAmount,
             0, // accept any amount of tokens
             path,
             address(this),
             block.timestamp
-        );
+        )[0];
     }
 
     // function bridge(
