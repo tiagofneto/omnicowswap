@@ -72,17 +72,18 @@ contract Omnicow is Ownable {
                 // if user was selling WETH, they receive USDC
                 receiveToken = address(USDC);
                 
-                uint256 percentOfTokens = (amount[i] * 10**18 / totalWETH) * 100;
+                uint256 percentOfTokens = (amount[i] * 10**18 / ETH_VALUE / totalWETH) * 100;
 
                 // add or subtract tokens to total pool because of AMM swap
-                if (tradingAmount == 0) {
-                  fundsForUser = (totalUSDC / 100) * percentOfTokens;
-                }
-                else if (tradingAmount > 0) {
-                  fundsForUser = ((totalUSDC - (uint256(tradingAmount) * 10**6)) / 100) * percentOfTokens;
-                } else {
-                  fundsForUser = ((totalUSDC + amountSwapped) / 100) * percentOfTokens;
-                }
+                /*if (tradingAmount == 0) {*/
+                  /*fundsForUser = (totalUSDC / 100) * percentOfTokens;*/
+                /*}*/
+                /*else if (tradingAmount > 0) {*/
+                  /*fundsForUser = ((totalUSDC - (uint256(tradingAmount) * 10**6)) / 100) * percentOfTokens;*/
+                /*} else {*/
+                  /*fundsForUser = ((totalUSDC + amountSwapped) / 100) * percentOfTokens;*/
+                /*}*/
+                fundsForUser = USDC.balanceOf(address(this)) / 100 * percentOfTokens;
 
             } else {
                 // if user was buying WETH, they receive WETH
@@ -91,14 +92,15 @@ contract Omnicow is Ownable {
                 uint256 percentOfTokens = (amount[i] * 10**6 / totalUSDC) * 100;
 
                 // add or subtract tokens to total pool because of AMM swap
-                if (tradingAmount == 0) {
-                  fundsForUser = (totalWETH / 100) * percentOfTokens;
-                }
-                else if (tradingAmount > 0) {
-                  fundsForUser = ((totalWETH + amountSwapped) / 100) * percentOfTokens;
-                } else {
-                  fundsForUser = ((totalWETH - (uint256(-tradingAmount) * 10**6)) / 100) * percentOfTokens;
-                }
+                /*if (tradingAmount == 0) {*/
+                  /*fundsForUser = (totalWETH / 100) * percentOfTokens;*/
+                /*}*/
+                /*else if (tradingAmount > 0) {*/
+                  /*fundsForUser = ((totalWETH + amountSwapped) / 100) * percentOfTokens;*/
+                /*} else {*/
+                  /*fundsForUser = ((totalWETH - (uint256(-tradingAmount) * 10**6)) / 100) * percentOfTokens;*/
+                /*}*/
+                fundsForUser = WETH.balanceOf(address(this)) / 100 * percentOfTokens;
             }
             
             IERC20(receiveToken).transferFrom(address(this), user[i], fundsForUser);
